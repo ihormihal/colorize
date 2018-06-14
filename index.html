@@ -3,10 +3,19 @@
     <link rel="stylesheet" href="style.css">
   </head>
   <body>
-    <img id="source" src="image.jpg" alt="">
+    <!-- <img id="source" src="image.jpg" alt=""> -->
     <canvas class="canvas" id="source-canvas"></canvas>
     <canvas class="canvas" id="dist-canvas"></canvas>
-    <script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
+
+    <div class="form-control">
+      <label for="shadow">Shadow: <span id="shadow-value">0</span></label>
+      <input id="shadow" type="range" min="0" max="255" step="1" value="0">
+    </div>
+    <div class="form-control">
+      <label for="light">Light: <span id="light-value">255</span></label>
+      <input id="light" type="range" min="0" max="255" step="1" value="255">
+    </div>
+
     <script src="index.js"></script>
   </body>
 </html>
