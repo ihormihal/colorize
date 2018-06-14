@@ -7,13 +7,15 @@
     <canvas class="canvas" id="source-canvas"></canvas>
     <canvas class="canvas" id="dist-canvas"></canvas>
 
+    <div id="loader">Processing...</div>
+
     <div class="form-control">
       <label for="shadow">Shadow: <span id="shadow-value">0</span></label>
-      <input id="shadow" type="range" min="0" max="255" step="1" value="0">
+      <input id="shadow" type="range" min="0" max="100" step="1" value="0">
     </div>
     <div class="form-control">
-      <label for="light">Light: <span id="light-value">255</span></label>
-      <input id="light" type="range" min="0" max="255" step="1" value="255">
+      <label for="light">Light: <span id="light-value">1</span></label>
+      <input id="light" type="range" min="0" max="100" step="1" value="100">
     </div>
 
     <script src="index.js"></script>
