@@ -87,25 +87,42 @@ const mapColors = (canvas) => {
   //
   // })
 
-
-
-  // console.log(keys)
-
   let colorMap = [];
   for(let i=0; i<256; i++){
     if(colors.hasOwnProperty(i)){
       colorMap[i] = colors[i];
     }else{
-      colorMap[i] = [0, 0, 0, 0];
+      let prevIndex, nextIndex;
+      nextIndex = prevIndex = i;
+
+      //find prev color
+      while(!colors.hasOwnProperty(prevIndex) && prevIndex > 0){
+        prevIndex--;
+      }
+      //find next color
+      while(!colors.hasOwnProperty(nextIndex) && nextIndex < 255){
+        nextIndex++;
+      }
+      //
+      let prevColor = !colors.hasOwnProperty(prevIndex) ? [0, 0, 0, 255] : colors[prevIndex];
+      let nextColor = !colors.hasOwnProperty(nextIndex) ? [255, 255, 255, 255] : colors[nextIndex];
+
+      //interpolate colors
+      const st = (i - prevIndex)/(nextIndex - prevIndex);
+      let middleColor = [
+        Math.round(prevColor[0] + (nextColor[0] - prevColor[0])*st),
+        Math.round(prevColor[1] + (nextColor[1] - prevColor[1])*st),
+        Math.round(prevColor[2] + (nextColor[2] - prevColor[2])*st),
+        Math.round(prevColor[3] + (nextColor[3] - prevColor[3])*st)
+      ]
+      colorMap[i] = middleColor;
+
     }
   }
 
   return colorMap;
 }
 
-const findMiddleColor = (undefinedGrey, colorMap) => {
-
-}
 
 const colorize = (canvas, colorMap) => {
   const ctx = canvas.getContext('2d');
@@ -146,21 +163,4 @@ source.onload = () => {
     distCanvas.getContext('2d').drawImage(dist, 0, 0, dist.width, dist.height);
     colorize(distCanvas, mapColors(sourceCanvas));
   }
-}
-
-
-
-html.shadowRange.onchange = (el) => {
-  settings.shadows = parseInt(el.target.value)/100;
-  loader.style.display = 'block';
-  setTimeout(() => {
-    colorize(distCanvas, mapColors(sourceCanvas));
-  }, 100);
-}
-html.lightRange.onchange = (el) => {
-  settings.lights = parseInt(el.target.value)/100;
-  loader.style.display = 'block';
-  setTimeout(() => {
-    colorize(distCanvas, mapColors(sourceCanvas));
-  }, 100);
 }
