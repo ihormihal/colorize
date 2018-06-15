@@ -1,22 +1,60 @@
 "use strict";
 
 const html = {
-  shadowRange: document.getElementById('shadow'),
-  lightRange: document.getElementById('light'),
-  shadowValue: document.getElementById('shadow-value'),
-  lightValue: document.getElementById('light-value'),
+  source: document.getElementById('source'),
+  target: document.getElementById('target'),
+  sourceFile: document.getElementById('source-file'),
+  targetFile: document.getElementById('target-file'),
   loader: document.getElementById('loader')
 }
 
 const sourceCanvas = document.getElementById('source-canvas');
-const distCanvas = document.getElementById('dist-canvas');
+const targetCanvas = document.getElementById('target-canvas');
+const resultCanvas = document.getElementById('result-canvas');
 
 const source = new Image();
-const dist = new Image();
+const target = new Image();
+let colorMap = [];
+
 const settings = {
   shadows: 0,
   lights: 1
+};
+
+html.source.onclick = () => {
+  html.sourceFile.click();
 }
+
+html.target.onclick = () => {
+  html.targetFile.click();
+}
+
+html.sourceFile.onchange = (e) => {
+  const file = e.target.files[0];
+  if(file.type.match('image.*')) {
+    const reader  = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (e) => {
+      if( e.target.readyState == FileReader.DONE) {
+	    	source.src = e.target.result;
+			}
+    }
+  }
+}
+
+html.targetFile.onchange = (e) => {
+  const file = e.target.files[0];
+  if(file.type.match('image.*')) {
+    const reader  = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (e) => {
+      if( e.target.readyState == FileReader.DONE) {
+        target.src = e.target.result;
+			}
+    }
+  }
+}
+
 
 
 
@@ -48,44 +86,6 @@ const mapColors = (canvas) => {
     let greyIndex = greyStyle(r, g, b, alpha);
     colors[greyIndex] = [r, g, b, alpha];
   }
-
-  // for(let y=0; y<canvas.height; y++){
-  //   for(let x=0; x<canvas.width; x++){
-  //     let r, g, b, alpha;
-  //     [r, g, b, alpha] = ctx.getImageData(x, y, 1, 1).data;
-  //     let key = greyStyle(r, g, b, alpha).join('-');
-  //     colorMap[key] = [r, g, b, alpha];
-  //   }
-  // }
-
-  // for(let y=0; y<pixels.length; y++){
-  //   for(let x=0; x<pixels[y].length; x++){
-  //     let r, g, b, alpha;
-  //     [r, g, b, alpha] = greyStyle(pixels[y][x][0], pixels[y][x][1], pixels[y][x][2], pixels[y][x][3]);
-  //
-  //     data[y*img.width + x] = rgbColor(r, g, b, alpha);
-  //   }
-  // }
-
-  // imageData.data.set(buf8);
-  // distCtx.putImageData(imageData, 0, 0);
-  // html.lightValue.innerHTML = settings.lights;
-  // html.shadowValue.innerHTML = settings.shadows;
-
-  // console.log(Object.keys(allColors))
-  // html.lightValue.innerHTML = settings.lights;
-  // html.shadowValue.innerHTML = settings.shadows;
-  // loader.style.display = 'none';
-
-  // console.log('Total colors: '+Object.keys(colorMap).length);
-
-  // let keys = Object.keys(colors).sort((a, b) => {
-  //   return Number(a) - Number(b);
-  // });
-  //
-  // let sortedColors = Object.values(colors).map((color) => {
-  //
-  // })
 
   let colorMap = [];
   for(let i=0; i<256; i++){
@@ -124,9 +124,11 @@ const mapColors = (canvas) => {
 }
 
 
-const colorize = (canvas, colorMap) => {
+const colorize = (targetCanvas, canvas, colorMap) => {
+  console.log('colorize')
+  const imageData = targetCanvas.getContext('2d').getImageData(0, 0, targetCanvas.width, targetCanvas.height);
   const ctx = canvas.getContext('2d');
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
   const buf = new ArrayBuffer(imageData.data.length);
   const buf8 = new Uint8ClampedArray(buf);
   const data = new Uint32Array(buf);
@@ -147,20 +149,27 @@ const colorize = (canvas, colorMap) => {
   imageData.data.set(buf8);
   ctx.putImageData(imageData, 0, 0);
 
-  loader.style.display = 'none';
+  // loader.style.display = 'none';
 }
 
-source.src = 'image.png';
 source.onload = () => {
   sourceCanvas.width = source.width;
   sourceCanvas.height = source.height;
   sourceCanvas.getContext('2d').drawImage(source, 0, 0, source.width, source.height);
 
-  dist.src = 'target.png';
-  dist.onload = () => {
-    distCanvas.width = dist.width;
-    distCanvas.height = dist.height;
-    distCanvas.getContext('2d').drawImage(dist, 0, 0, dist.width, dist.height);
-    colorize(distCanvas, mapColors(sourceCanvas));
+  colorMap = mapColors(sourceCanvas);
+  if(target.src){
+    colorize(targetCanvas, resultCanvas, colorMap);
+  }
+}
+
+target.onload = () => {
+  targetCanvas.width = resultCanvas.width = target.width;
+  targetCanvas.height = resultCanvas.height = target.height;
+  targetCanvas.getContext('2d').drawImage(target, 0, 0, target.width, target.height);
+  resultCanvas.getContext('2d').drawImage(target, 0, 0, target.width, target.height);
+
+  if(source.src && colorMap.length == 256){
+    colorize(targetCanvas, resultCanvas, colorMap);
   }
 }

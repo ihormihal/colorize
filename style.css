@@ -1,6 +1,4 @@
 .canvas {
-  border: 1px solid #ccc;
-  background-color: #f0f0f0;
 }
 
 .form-control {
@@ -8,4 +6,34 @@
 }
 .form-control label, .form-control input {
   width: 100%;
+}
+
+.drop, .result {
+  width: 50%;
+  margin: 30px auto;
+  height: 400px;
+  background-color: #ccc;
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+  text-align: center;
+}
+.drop .label, .result .label {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #f0f0f0;
+  font-size: 40px;
+}
+.drop input[type=file] {
+  display: none;
+}
+
+.cols {
+}
+.col {
+  width: 50%;
+  float: left;
 }
