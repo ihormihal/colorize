@@ -13,11 +13,12 @@ const sourceCanvas = document.getElementById('source-canvas');
 const targetCanvas = document.getElementById('target-canvas');
 const resultCanvas = document.getElementById('result-canvas');
 const diagramCanvas = document.getElementById('diagram-canvas');
-diagramCanvas.width = 512;
-diagramCanvas.height = 200;
+
+const pixelRatio = 2;
+diagramCanvas.width = 256*pixelRatio;
+diagramCanvas.height = 100*pixelRatio;
 const diagramCtx = diagramCanvas.getContext('2d');
-// diagramCtx.scale(2,2);
-diagramCtx.transform(1, 0, 0, -1, 0, 100)
+diagramCtx.transform(1, 0, 0, -1, 0, 200);
 
 const source = new Image();
 const target = new Image();
@@ -80,16 +81,17 @@ const greyStyle = (r, g, b, alpha) => {
 
 function drawLine(index, color, count, max, ctx = diagramCtx){
   let value = count*100/max;
-  // ctx.save();
   ctx.strokeStyle = color;
   ctx.beginPath();
-  ctx.moveTo(index,0);
-  ctx.lineTo(index,count);
+  ctx.moveTo(index*pixelRatio,0);
+  ctx.lineTo(index*pixelRatio,value*pixelRatio);
   ctx.stroke();
-  // ctx.restore();
 }
 
 const mapColors = (canvas) => {
+
+  diagramCtx.clearRect(0, 0, diagramCanvas.width, diagramCanvas.height);
+
   const ctx = canvas.getContext('2d');
   const colors = {};
 
@@ -144,6 +146,7 @@ const mapColors = (canvas) => {
 
     drawLine(i, `rgba( ${colorMap[i][0]}, ${colorMap[i][1]}, ${colorMap[i][2]}, ${colorMap[i][3]})`, colorMap[i][4], max);
   }
+  console.log(colorMap, max)
   return colorMap;
 }
 

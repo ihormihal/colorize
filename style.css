@@ -44,6 +44,19 @@ body {
   display: none;
 }
 
+.container {
+  background-color: #f0f0f0;
+  padding: 15px;
+}
+
+.diagram {
+  display: block;
+  background-color: #fff;
+  width: 256px;
+  height: 100px;
+  margin: 30px auto;
+}
+
 .cols {
 
 }
