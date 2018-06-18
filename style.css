@@ -7,11 +7,22 @@ body {
   box-sizing: border-box;
 }
 
+#selection {
+  background-color: rgba(0,0,0,0.2);
+  position: absolute;
+  z-index: 1000;
+}
+
 .form-control {
   width: 600px;
 }
 .form-control label, .form-control input {
   width: 100%;
+}
+
+.canvas {
+  width: 100%;
+  height: auto;
 }
 
 .drop, .result {
