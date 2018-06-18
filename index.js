@@ -5,12 +5,19 @@ const html = {
   target: document.getElementById('target'),
   sourceFile: document.getElementById('source-file'),
   targetFile: document.getElementById('target-file'),
-  loader: document.getElementById('loader')
+  loader: document.getElementById('loader'),
+  diagram: document.getElementById('diagram-canvas')
 }
 
 const sourceCanvas = document.getElementById('source-canvas');
 const targetCanvas = document.getElementById('target-canvas');
 const resultCanvas = document.getElementById('result-canvas');
+const diagramCanvas = document.getElementById('diagram-canvas');
+diagramCanvas.width = 512;
+diagramCanvas.height = 200;
+const diagramCtx = diagramCanvas.getContext('2d');
+// diagramCtx.scale(2,2);
+diagramCtx.transform(1, 0, 0, -1, 0, 100)
 
 const source = new Image();
 const target = new Image();
@@ -71,10 +78,22 @@ const greyStyle = (r, g, b, alpha) => {
   return grey;
 }
 
+function drawLine(index, color, count, max, ctx = diagramCtx){
+  let value = count*100/max;
+  // ctx.save();
+  ctx.strokeStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(index,0);
+  ctx.lineTo(index,count);
+  ctx.stroke();
+  // ctx.restore();
+}
 
 const mapColors = (canvas) => {
   const ctx = canvas.getContext('2d');
   const colors = {};
+
+  let max = 0;
 
   let data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
   for(let i=0; i<data.length; i = i + 4){
@@ -84,7 +103,10 @@ const mapColors = (canvas) => {
     b = data[i+2];
     alpha = data[i+3];
     let greyIndex = greyStyle(r, g, b, alpha);
-    colors[greyIndex] = [r, g, b, alpha];
+    let count = colors[greyIndex] && colors[greyIndex][4] ? colors[greyIndex][4] : 0;
+    count++;
+    colors[greyIndex] = [r, g, b, alpha, count];
+    max = count > max ? count : max;
   }
 
   let colorMap = [];
@@ -113,13 +135,15 @@ const mapColors = (canvas) => {
         Math.round(prevColor[0] + (nextColor[0] - prevColor[0])*st),
         Math.round(prevColor[1] + (nextColor[1] - prevColor[1])*st),
         Math.round(prevColor[2] + (nextColor[2] - prevColor[2])*st),
-        Math.round(prevColor[3] + (nextColor[3] - prevColor[3])*st)
+        Math.round(prevColor[3] + (nextColor[3] - prevColor[3])*st),
+        0
       ]
       colorMap[i] = middleColor;
 
     }
-  }
 
+    drawLine(i, `rgba( ${colorMap[i][0]}, ${colorMap[i][1]}, ${colorMap[i][2]}, ${colorMap[i][3]})`, colorMap[i][4], max);
+  }
   return colorMap;
 }
 
@@ -148,8 +172,6 @@ const colorize = (targetCanvas, canvas, colorMap) => {
 
   imageData.data.set(buf8);
   ctx.putImageData(imageData, 0, 0);
-
-  // loader.style.display = 'none';
 }
 
 source.onload = () => {

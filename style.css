@@ -36,6 +36,10 @@ body {
   color: #f0f0f0;
   font-size: 40px;
 }
+.drop canvas {
+  max-height: 500px;
+  width: auto;
+}
 .drop input[type=file] {
   display: none;
 }
