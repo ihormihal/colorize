@@ -1,5 +1,15 @@
 "use strict";
 
+const pixelRatio = 2;
+const settings = {
+  shadows: 0,
+  lights: 1
+};
+const source = new Image();
+const target = new Image();
+let colorMap = [];
+
+
 const html = {
   source: document.getElementById('source'),
   target: document.getElementById('target'),
@@ -11,63 +21,16 @@ const html = {
   selection: document.getElementById('selection')
 }
 
-let moving = 0;
-
 const sourceCanvas = document.getElementById('source-canvas');
 const targetCanvas = document.getElementById('target-canvas');
 const resultCanvas = document.getElementById('result-canvas');
 const diagramCanvas = document.getElementById('diagram-canvas');
 
-const pixelRatio = 2;
+const diagramCtx = diagramCanvas.getContext('2d');
 diagramCanvas.width = 256*pixelRatio;
 diagramCanvas.height = 100*pixelRatio;
-const diagramCtx = diagramCanvas.getContext('2d');
+
 diagramCtx.transform(1, 0, 0, -1, 0, 200);
-
-const source = new Image();
-const target = new Image();
-let colorMap = [];
-
-const settings = {
-  shadows: 0,
-  lights: 1
-};
-
-html.sourceInput.onmouseup = () => {
-  html.sourceFile.click();
-}
-
-html.target.onclick = () => {
-  html.targetFile.click();
-}
-
-html.sourceFile.onchange = (e) => {
-  const file = e.target.files[0];
-  if(file.type.match('image.*')) {
-    const reader  = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (e) => {
-      if( e.target.readyState == FileReader.DONE) {
-	    	source.src = e.target.result;
-			}
-    }
-  }
-}
-
-html.targetFile.onchange = (e) => {
-  const file = e.target.files[0];
-  if(file.type.match('image.*')) {
-    const reader  = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (e) => {
-      if( e.target.readyState == FileReader.DONE) {
-        target.src = e.target.result;
-			}
-    }
-  }
-}
-
-
 
 
 const rgbColor = (r, g, b, alpha = 255) => {
@@ -83,7 +46,7 @@ const greyStyle = (r, g, b, alpha) => {
   return grey;
 }
 
-function drawLine(index, color, count, max, ctx = diagramCtx){
+function drawHistoLine(index, color, count, max, ctx = diagramCtx){
   let value = count*100/max;
   ctx.strokeStyle = color;
   ctx.beginPath();
@@ -154,7 +117,7 @@ const mapColors = (canvas, selection) => {
 
     }
 
-    drawLine(i, `rgba( ${colorMap[i][0]}, ${colorMap[i][1]}, ${colorMap[i][2]}, ${colorMap[i][3]})`, colorMap[i][4], max);
+    drawHistoLine(i, `rgba( ${colorMap[i][0]}, ${colorMap[i][1]}, ${colorMap[i][2]}, ${colorMap[i][3]})`, colorMap[i][4], max);
   }
   return colorMap;
 }
@@ -186,6 +149,8 @@ const colorize = (targetCanvas, canvas, colorMap) => {
   ctx.putImageData(imageData, 0, 0);
 }
 
+//IMAGES ON LOAD
+
 source.onload = () => {
   html.source.style.display = 'block';
   sourceCanvas.width = source.width;
@@ -209,7 +174,48 @@ target.onload = () => {
   }
 }
 
-let start, selection, offset;
+//CONTROLS
+
+// FILE inputs
+
+html.sourceInput.onmouseup = () => {
+  html.sourceFile.click();
+}
+
+html.target.onclick = () => {
+  html.targetFile.click();
+}
+
+html.sourceFile.onchange = (e) => {
+  const file = e.target.files[0];
+  if(file.type.match('image.*')) {
+    const reader  = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (e) => {
+      if( e.target.readyState == FileReader.DONE) {
+	    	source.src = e.target.result;
+			}
+    }
+  }
+}
+
+html.targetFile.onchange = (e) => {
+  const file = e.target.files[0];
+  if(file.type.match('image.*')) {
+    const reader  = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (e) => {
+      if( e.target.readyState == FileReader.DONE) {
+        target.src = e.target.result;
+			}
+    }
+  }
+}
+
+
+// SOURCE AREA SELECTION
+
+let moving, start, selection, offset;
 
 sourceCanvas.onmousedown = (event) => {
   moving = true;
@@ -224,6 +230,7 @@ sourceCanvas.onmousedown = (event) => {
   html.selection.style.left = 0;
   html.selection.style.top = 0;
 }
+
 sourceCanvas.onmousemove = (event) => {
   if(moving){
 
@@ -244,6 +251,7 @@ sourceCanvas.onmousemove = (event) => {
     html.selection.style.height = selection.height;
   }
 }
+
 document.onmouseup = (event) => {
   moving = false;
   if(selection.width - selection.height){
