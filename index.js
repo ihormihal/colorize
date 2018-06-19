@@ -2,14 +2,9 @@
 
 const pixelRatio = 2;
 const peakWeight = 0.8; //for color map normalization
-const settings = {
-  shadows: 0,
-  lights: 1
-};
 const source = new Image();
 const target = new Image();
 let colorMap = [];
-let peak = { start: 0, end: 255 };
 
 // HTML ELEMENTS
 
@@ -27,11 +22,15 @@ const sourceCanvas = document.getElementById('source-canvas');
 const targetCanvas = document.getElementById('target-canvas');
 const resultCanvas = document.getElementById('result-canvas');
 const histogramCanvas = document.getElementById('histogram-canvas');
+const histogramTargetCanvas = document.getElementById('histogram-target-canvas');
 
-const histogramCtx = histogramCanvas.getContext('2d');
 histogramCanvas.width = 256*pixelRatio;
 histogramCanvas.height = 100*pixelRatio;
-histogramCtx.transform(1, 0, 0, -1, 0, 200);
+histogramCanvas.getContext('2d').transform(1, 0, 0, -1, 0, 200);
+
+histogramTargetCanvas.width = 256*pixelRatio;
+histogramTargetCanvas.height = 100*pixelRatio;
+histogramTargetCanvas.getContext('2d').transform(1, 0, 0, -1, 0, 200);
 
 // FUNCTIONS
 
@@ -40,42 +39,50 @@ const rgbColor = (r, g, b, alpha = 255) => {
 }
 
 const greyStyle = (r, g, b, alpha) => {
-  let grey = (r + g + b)/3;
-  grey = (255 - (255 - grey)*(1 - settings.shadows))*settings.lights;
-
-  grey = Math.round(grey);
+  let grey = Math.round((r + g + b)/3);
   if(alpha == 0) grey = 255;
   return grey;
 }
 
-const drawHistogram = (colorMap, max) => {
-  histogramCtx.clearRect(0, 0, histogramCanvas.width, histogramCanvas.height);
-  for(let i=0;i<colorMap.length;i++){
-    let value = colorMap[i][4]*100/max;
-    histogramCtx.strokeStyle = `rgba( ${colorMap[i][0]}, ${colorMap[i][1]}, ${colorMap[i][2]}, ${colorMap[i][3]})`;
-    histogramCtx.beginPath();
-    histogramCtx.moveTo(i*pixelRatio,0);
-    histogramCtx.lineTo(i*pixelRatio,value*pixelRatio);
-    histogramCtx.stroke();
+const drawHistogram = (canvas, map) => {
+  let ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  for(let i=0;i<map.length;i++){
+    let value = map[i][4]*100;
+    ctx.strokeStyle = `rgba( ${map[i][0]}, ${map[i][1]}, ${map[i][2]}, ${map[i][3]})`;
+    ctx.beginPath();
+    ctx.moveTo(i*pixelRatio,0);
+    ctx.lineTo(i*pixelRatio,value*pixelRatio);
+    ctx.stroke();
   }
 }
 
-const findPeak = (colorMap, total) => {
-  peak = { start: 0, end: 255 };
+const findPeak = (map) => {
+  let peak = { start: 0, end: 255 };
   let count = 0;
+  let total = 0;
+  for(let i=0;i<map.length;i++){
+    total += map[i][4];
+  }
   let offset = total*(1 - peakWeight)/2;
-  for(let i=0;i<colorMap.length;i++){
-    count += colorMap[i][4];
+  for(let i=0;i<map.length;i++){
+    count += map[i][4];
     if(count < offset) peak.start = i;
     if(count < total - offset) peak.end = i;
   }
+  return peak;
 }
 
 const alignColorMap = () => {
+  let alignedMap = [];
+  for(let i=0;i<colorMap.length;i++){
 
+  }
+  return alignedMap;
 }
 
 const mapColors = (canvas, selection) => {
+  let map = [];
 
   const ctx = canvas.getContext('2d');
   const colors = {};
@@ -105,11 +112,11 @@ const mapColors = (canvas, selection) => {
     max = count > max ? count : max;
   }
 
-  colorMap = [];
   let pixelsCounter = 0;
   for(let i=0; i<256; i++){
     if(colors.hasOwnProperty(i)){
-      colorMap[i] = colors[i];
+      map[i] = colors[i];
+      map[i][4] = map[i][4]/max;
     }else{
       let prevIndex, nextIndex;
       nextIndex = prevIndex = i;
@@ -135,42 +142,42 @@ const mapColors = (canvas, selection) => {
         Math.round(prevColor[3] + (nextColor[3] - prevColor[3])*st),
         0
       ]
-      colorMap[i] = middleColor;
+      map[i] = middleColor;
 
     }
 
   }
-
-  // findPeak(colorMap, pixelsCount);
-  drawHistogram(colorMap, max);
-  return colorMap;
+  return map;
 }
 
 
-const colorize = (targetCanvas, canvas, colorMap) => {
+const colorize = () => {
   console.log('colorize')
-  const imageData = targetCanvas.getContext('2d').getImageData(0, 0, targetCanvas.width, targetCanvas.height);
-  const ctx = canvas.getContext('2d');
+  const targetCtx = targetCanvas.getContext('2d');
+  const imageData = targetCtx.getImageData(0, 0, targetCanvas.width, targetCanvas.height);
 
   const buf = new ArrayBuffer(imageData.data.length);
   const buf8 = new Uint8ClampedArray(buf);
   const data = new Uint32Array(buf);
 
 
-  for(let y=0; y<canvas.height; y++){
-    for(let x=0; x<canvas.width; x++){
+  for(let y=0; y<resultCanvas.height; y++){
+    for(let x=0; x<resultCanvas.width; x++){
       let r, g, b, alpha;
-      [r, g, b, alpha] = ctx.getImageData(x, y, 1, 1).data;
+      [r, g, b, alpha] = targetCtx.getImageData(x, y, 1, 1).data;
 
       let greyIndex = greyStyle(r, g, b, alpha);
       [r, g, b, alpha] = colorMap[greyIndex];
 
-      data[y*canvas.width + x] = rgbColor(r, g, b, alpha);
+      data[y*resultCanvas.width + x] = rgbColor(r, g, b, alpha);
     }
   }
 
   imageData.data.set(buf8);
-  ctx.putImageData(imageData, 0, 0);
+  resultCanvas.getContext('2d').putImageData(imageData, 0, 0);
+}
+
+const colorizeSelection = () => {
 }
 
 //IMAGES ON LOAD
@@ -182,8 +189,10 @@ source.onload = () => {
   sourceCanvas.getContext('2d').drawImage(source, 0, 0, source.width, source.height);
 
   colorMap = mapColors(sourceCanvas);
+  drawHistogram(histogramCanvas, colorMap);
+  findPeak(colorMap);
   if(target.src){
-    colorize(targetCanvas, resultCanvas, colorMap);
+    colorize();
   }
 }
 
@@ -193,8 +202,11 @@ target.onload = () => {
   targetCanvas.getContext('2d').drawImage(target, 0, 0, target.width, target.height);
   resultCanvas.getContext('2d').drawImage(target, 0, 0, target.width, target.height);
 
+  let targetcolorMap = mapColors(targetCanvas);
+  drawHistogram(histogramTargetCanvas, targetcolorMap);
+  findPeak(targetcolorMap);
   if(source.src && colorMap.length == 256){
-    colorize(targetCanvas, resultCanvas, colorMap);
+    colorize();
   }
 }
 
@@ -278,12 +290,18 @@ html.sourceArea.onmousemove = (event) => {
 
 document.onmouseup = (event) => {
   moving = false;
-  if(selection && selection.width - selection.height){
-    if(source.src){
-      mapColors(sourceCanvas, selection);
-      //colorize from selection
-      if(target.src){
-        colorize(targetCanvas, resultCanvas, colorMap);
+  //check if inside
+  let rect = html.sourceArea.getBoundingClientRect();
+  if(event.clientX >= rect.left && event.clientX <= rect.left+rect.width && event.clientY >= rect.top && event.clientY <= rect.top + rect.height){
+    if(selection && selection.width - selection.height){
+      if(source.src){
+        colorMap = mapColors(sourceCanvas, selection);
+        drawHistogram(histogramCanvas, colorMap);
+        findPeak(colorMap);
+        //colorize from selection
+        if(target.src){
+          colorize();
+        }
       }
     }
   }
