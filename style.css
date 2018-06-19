@@ -7,14 +7,14 @@ body {
   box-sizing: border-box;
 }
 
-#selection {
-  background-color: rgba(0,0,0,0.2);
-  position: absolute;
-  z-index: 1000;
-}
 .selection-wrapper {
   position: relative;
   display: inline-block;
+}
+.selection {
+  background-color: rgba(0,0,0,0.2);
+  position: absolute;
+  z-index: 1000;
 }
 
 .form-control {
@@ -29,7 +29,7 @@ body {
   height: auto;
 }
 
-.drop, .result {
+.image {
   margin: 0 auto;
   min-height: 300px;
   background-color: #ccc;
@@ -38,15 +38,7 @@ body {
   position: relative;
   text-align: center;
 }
-.drop.file-input {
-  min-height: 100px;
-  background-color: #6dbcff;
-}
-.result {
-  background-color: #c5c5a5;
-  cursor: default;
-}
-.drop .label, .result .label {
+.image .label {
   position: absolute;
   left: 0;
   width: 100%;
@@ -54,6 +46,12 @@ body {
   transform: translateY(-50%);
   color: #f0f0f0;
   font-size: 40px;
+}
+
+
+.drop.file-input {
+  min-height: 100px;
+  background-color: #6dbcff;
 }
 .drop canvas {
   max-height: 500px;
@@ -63,12 +61,14 @@ body {
   display: none;
 }
 
+
+
 .container {
   background-color: #f0f0f0;
   padding: 15px;
 }
 
-.diagram {
+.histogram {
   display: block;
   background-color: #fff;
   width: 256px;

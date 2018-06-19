@@ -4,32 +4,33 @@
   </head>
   <body>
     <!-- <img id="source" src="image.jpg" alt=""> -->
-    <div id="source-input" class="file-input drop">
+    <div id="source-input" class="image drop file-input">
       <div class="label">SOURCE IMG</div>
       <input id="source-file" type="file" accept="image/*">
     </div>
-    <div id="source" class="drop" style="display:none">
-      <div class="selection-wrapper">
-        <div id="selection"></div>
+
+    <div id="source" class="image" style="display:none">
+      <div id="source-area" class="selection-wrapper">
+        <div id="selection" class="selection"></div>
         <canvas class="canvas" id="source-canvas"></canvas>
       </div>
     </div>
 
     <div class="container">
-      <canvas class="canvas diagram" id="diagram-canvas"></canvas>
+      <canvas class="canvas histogram" id="histogram-canvas"></canvas>
     </div>
 
     <div class="cols">
       <div class="col">
-        <div id="target" class="drop">
+        <div id="target" class="image drop">
           <div class="label">TARGET IMG</div>
           <input id="target-file" type="file" accept="image/*">
           <canvas class="canvas" id="target-canvas"></canvas>
         </div>
       </div>
       <div class="col">
-        <div class="result">
-          <div class="label loader" id="loader">RESULT</div>
+        <div class="image">
+          <div class="label">RESULT</div>
           <canvas class="canvas" id="result-canvas"></canvas>
         </div>
       </div>

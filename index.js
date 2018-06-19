@@ -1,6 +1,7 @@
 "use strict";
 
 const pixelRatio = 2;
+const peakWeight = 0.8; //for color map normalization
 const settings = {
   shadows: 0,
   lights: 1
@@ -8,30 +9,31 @@ const settings = {
 const source = new Image();
 const target = new Image();
 let colorMap = [];
+let peak = { start: 0, end: 255 };
 
+// HTML ELEMENTS
 
 const html = {
   source: document.getElementById('source'),
   target: document.getElementById('target'),
+  sourceArea: document.getElementById('source-area'),
   sourceInput: document.getElementById('source-input'),
   sourceFile: document.getElementById('source-file'),
   targetFile: document.getElementById('target-file'),
-  loader: document.getElementById('loader'),
-  diagram: document.getElementById('diagram-canvas'),
   selection: document.getElementById('selection')
 }
 
 const sourceCanvas = document.getElementById('source-canvas');
 const targetCanvas = document.getElementById('target-canvas');
 const resultCanvas = document.getElementById('result-canvas');
-const diagramCanvas = document.getElementById('diagram-canvas');
+const histogramCanvas = document.getElementById('histogram-canvas');
 
-const diagramCtx = diagramCanvas.getContext('2d');
-diagramCanvas.width = 256*pixelRatio;
-diagramCanvas.height = 100*pixelRatio;
+const histogramCtx = histogramCanvas.getContext('2d');
+histogramCanvas.width = 256*pixelRatio;
+histogramCanvas.height = 100*pixelRatio;
+histogramCtx.transform(1, 0, 0, -1, 0, 200);
 
-diagramCtx.transform(1, 0, 0, -1, 0, 200);
-
+// FUNCTIONS
 
 const rgbColor = (r, g, b, alpha = 255) => {
   return (alpha << 24) | (b << 16) | (g <<  8) | r;
@@ -46,28 +48,47 @@ const greyStyle = (r, g, b, alpha) => {
   return grey;
 }
 
-function drawHistoLine(index, color, count, max, ctx = diagramCtx){
-  let value = count*100/max;
-  ctx.strokeStyle = color;
-  ctx.beginPath();
-  ctx.moveTo(index*pixelRatio,0);
-  ctx.lineTo(index*pixelRatio,value*pixelRatio);
-  ctx.stroke();
+const drawHistogram = (colorMap, max) => {
+  histogramCtx.clearRect(0, 0, histogramCanvas.width, histogramCanvas.height);
+  for(let i=0;i<colorMap.length;i++){
+    let value = colorMap[i][4]*100/max;
+    histogramCtx.strokeStyle = `rgba( ${colorMap[i][0]}, ${colorMap[i][1]}, ${colorMap[i][2]}, ${colorMap[i][3]})`;
+    histogramCtx.beginPath();
+    histogramCtx.moveTo(i*pixelRatio,0);
+    histogramCtx.lineTo(i*pixelRatio,value*pixelRatio);
+    histogramCtx.stroke();
+  }
+}
+
+const findPeak = (colorMap, total) => {
+  peak = { start: 0, end: 255 };
+  let count = 0;
+  let offset = total*(1 - peakWeight)/2;
+  for(let i=0;i<colorMap.length;i++){
+    count += colorMap[i][4];
+    if(count < offset) peak.start = i;
+    if(count < total - offset) peak.end = i;
+  }
+}
+
+const alignColorMap = () => {
+
 }
 
 const mapColors = (canvas, selection) => {
 
-  diagramCtx.clearRect(0, 0, diagramCanvas.width, diagramCanvas.height);
-
   const ctx = canvas.getContext('2d');
   const colors = {};
 
+  let pixelsCount = 0;
   let max = 0;
 
   let data;
   if(selection){
+    pixelsCount = selection.width * selection.height;
     data = ctx.getImageData(selection.x, selection.y, selection.width, selection.height).data;
   }else{
+    pixelsCount = canvas.width * canvas.height;
     data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
   }
 
@@ -84,7 +105,8 @@ const mapColors = (canvas, selection) => {
     max = count > max ? count : max;
   }
 
-  let colorMap = [];
+  colorMap = [];
+  let pixelsCounter = 0;
   for(let i=0; i<256; i++){
     if(colors.hasOwnProperty(i)){
       colorMap[i] = colors[i];
@@ -117,8 +139,10 @@ const mapColors = (canvas, selection) => {
 
     }
 
-    drawHistoLine(i, `rgba( ${colorMap[i][0]}, ${colorMap[i][1]}, ${colorMap[i][2]}, ${colorMap[i][3]})`, colorMap[i][4], max);
   }
+
+  // findPeak(colorMap, pixelsCount);
+  drawHistogram(colorMap, max);
   return colorMap;
 }
 
@@ -217,12 +241,12 @@ html.targetFile.onchange = (e) => {
 
 let moving, start, selection, offset;
 
-sourceCanvas.onmousedown = (event) => {
+html.sourceArea.onmousedown = (event) => {
   moving = true;
   selection = { x: 0, y: 0, width: 0, height: 0 };
   start = [event.clientX, event.clientY];
 
-  let rect = sourceCanvas.getBoundingClientRect();
+  let rect = html.sourceArea.getBoundingClientRect();
   offset = [-rect.left, -rect.top];
 
   html.selection.style.width = 0;
@@ -231,7 +255,7 @@ sourceCanvas.onmousedown = (event) => {
   html.selection.style.top = 0;
 }
 
-sourceCanvas.onmousemove = (event) => {
+html.sourceArea.onmousemove = (event) => {
   if(moving){
 
     let move = [event.clientX - start[0], event.clientY - start[1]];
@@ -254,9 +278,9 @@ sourceCanvas.onmousemove = (event) => {
 
 document.onmouseup = (event) => {
   moving = false;
-  if(selection.width - selection.height){
+  if(selection && selection.width - selection.height){
     if(source.src){
-      colorMap = mapColors(sourceCanvas, selection);
+      mapColors(sourceCanvas, selection);
       //colorize from selection
       if(target.src){
         colorize(targetCanvas, resultCanvas, colorMap);
