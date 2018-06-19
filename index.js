@@ -3,6 +3,7 @@
 const html = {
   source: document.getElementById('source'),
   target: document.getElementById('target'),
+  sourceInput: document.getElementById('source-input'),
   sourceFile: document.getElementById('source-file'),
   targetFile: document.getElementById('target-file'),
   loader: document.getElementById('loader'),
@@ -32,9 +33,9 @@ const settings = {
   lights: 1
 };
 
-// html.source.onmouseup = () => {
-//   html.sourceFile.click();
-// }
+html.sourceInput.onmouseup = () => {
+  html.sourceFile.click();
+}
 
 html.target.onclick = () => {
   html.targetFile.click();
@@ -102,7 +103,6 @@ const mapColors = (canvas, selection) => {
 
   let data;
   if(selection){
-    console.log(selection)
     data = ctx.getImageData(selection.x, selection.y, selection.width, selection.height).data;
   }else{
     data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
@@ -187,6 +187,7 @@ const colorize = (targetCanvas, canvas, colorMap) => {
 }
 
 source.onload = () => {
+  html.source.style.display = 'block';
   sourceCanvas.width = source.width;
   sourceCanvas.height = source.height;
   sourceCanvas.getContext('2d').drawImage(source, 0, 0, source.width, source.height);
@@ -208,30 +209,50 @@ target.onload = () => {
   }
 }
 
-const selection = { x: 0, y: 0, width: 0, height: 0 };
-let offset = { y: html.source.offsetTop, x: html.source.offsetLeft };
+let start, selection, offset;
+
 sourceCanvas.onmousedown = (event) => {
-  moving = true
-  selection.width = 0;
-  selection.height = 0;
+  moving = true;
+  selection = { x: 0, y: 0, width: 0, height: 0 };
+  start = [event.clientX, event.clientY];
+
+  let rect = sourceCanvas.getBoundingClientRect();
+  offset = [-rect.left, -rect.top];
+
   html.selection.style.width = 0;
   html.selection.style.height = 0;
-  html.selection.style.left = selection.x = event.pageX - offset.x;
-  html.selection.style.top = selection.y = event.pageY - offset.y;
+  html.selection.style.left = 0;
+  html.selection.style.top = 0;
 }
 sourceCanvas.onmousemove = (event) => {
   if(moving){
-    html.selection.style.width = selection.width = event.pageX - offset.x - selection.x;
-    html.selection.style.height = selection.height = event.pageY - offset.y - selection.y;
+
+    let move = [event.clientX - start[0], event.clientY - start[1]];
+
+    selection.width = Math.abs(move[0]);
+    selection.height = Math.abs(move[1]);
+
+    selection.x = move[0] >= 0 ? start[0] : event.clientX;
+    selection.y = move[1] >= 0 ? start[1] : event.clientY;
+
+    selection.x += offset[0];
+    selection.y += offset[1];
+
+    html.selection.style.left = selection.x;
+    html.selection.style.top = selection.y;
+    html.selection.style.width = selection.width;
+    html.selection.style.height = selection.height;
   }
 }
-sourceCanvas.onmouseup = (event) => {
+document.onmouseup = (event) => {
   moving = false;
   if(selection.width - selection.height){
-    //colorize from selection
-    if(source.src && target.src){
+    if(source.src){
       colorMap = mapColors(sourceCanvas, selection);
-      colorize(targetCanvas, resultCanvas, colorMap);
+      //colorize from selection
+      if(target.src){
+        colorize(targetCanvas, resultCanvas, colorMap);
+      }
     }
   }
 }

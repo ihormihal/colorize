@@ -12,6 +12,10 @@ body {
   position: absolute;
   z-index: 1000;
 }
+.selection-wrapper {
+  position: relative;
+  display: inline-block;
+}
 
 .form-control {
   width: 600px;
@@ -33,6 +37,10 @@ body {
   cursor: pointer;
   position: relative;
   text-align: center;
+}
+.drop.file-input {
+  min-height: 100px;
+  background-color: #6dbcff;
 }
 .result {
   background-color: #c5c5a5;
