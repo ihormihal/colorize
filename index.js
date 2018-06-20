@@ -1,10 +1,11 @@
 "use strict";
 
 const pixelRatio = 2;
-const peakWeight = 0.8; //for color map normalization
-const source = new Image();
-const target = new Image();
+let peakWeight = 0.5; //for color map normalization
+let source = new Image();
+let target = new Image();
 let colorMap = [];
+let targetColorMap = [];
 
 // HTML ELEMENTS
 
@@ -15,6 +16,7 @@ const html = {
   sourceInput: document.getElementById('source-input'),
   sourceFile: document.getElementById('source-file'),
   targetFile: document.getElementById('target-file'),
+  peakWeight: document.getElementById('peak-weight'),
   selection: document.getElementById('selection')
 }
 
@@ -23,6 +25,9 @@ const targetCanvas = document.getElementById('target-canvas');
 const resultCanvas = document.getElementById('result-canvas');
 const histogramCanvas = document.getElementById('histogram-canvas');
 const histogramTargetCanvas = document.getElementById('histogram-target-canvas');
+const histogramResultCanvas = document.getElementById('histogram-result-canvas');
+
+html.peakWeight.value = peakWeight;
 
 histogramCanvas.width = 256*pixelRatio;
 histogramCanvas.height = 100*pixelRatio;
@@ -31,6 +36,10 @@ histogramCanvas.getContext('2d').transform(1, 0, 0, -1, 0, 200);
 histogramTargetCanvas.width = 256*pixelRatio;
 histogramTargetCanvas.height = 100*pixelRatio;
 histogramTargetCanvas.getContext('2d').transform(1, 0, 0, -1, 0, 200);
+
+histogramResultCanvas.width = 256*pixelRatio;
+histogramResultCanvas.height = 100*pixelRatio;
+histogramResultCanvas.getContext('2d').transform(1, 0, 0, -1, 0, 200);
 
 // FUNCTIONS
 
@@ -73,12 +82,77 @@ const findPeak = (map) => {
   return peak;
 }
 
-const alignColorMap = () => {
-  let alignedMap = [];
-  for(let i=0;i<colorMap.length;i++){
+const alignColorMap = (sourcePeak, targetPeak, map) => {
+  let outputMap = [];
+  let dWidth = (sourcePeak.end - sourcePeak.start)/2;
+  let tWidth = (targetPeak.end - targetPeak.start)/2;
+  let sourcePeakCenter = (sourcePeak.start + sourcePeak.end)/2;
+  let targetPeakCenter = (targetPeak.start + targetPeak.end)/2;
+  let t = targetPeakCenter - sourcePeakCenter;
+  let z = tWidth/dWidth;
+  for(let i=0;i<map.length;i++){
+    let newIndex = i + t;
+    newIndex = Math.round(targetPeakCenter + (newIndex - targetPeakCenter)*z);
 
+    if(newIndex >= 0 && newIndex < 256){
+      let s = newIndex/i;
+      let newColor = [ map[i][0]*s, map[i][1]*s, map[i][2]*s, map[i][3], map[i][4]];
+      outputMap[newIndex] = [
+        newColor[0] < 256 ? newColor[0] : 255,
+        newColor[1] < 256 ? newColor[1] : 255,
+        newColor[2] < 256 ? newColor[2] : 255,
+        newColor[3],
+        newColor[4]
+      ];
+    }
   }
-  return alignedMap;
+  outputMap = interpolateColorMap(outputMap);
+  drawHistogram(histogramResultCanvas, outputMap);
+  return outputMap;
+}
+
+
+const interpolateColorMap = (map) => {
+  let outputMap = [];
+  for(let i=0; i<256; i++){
+    if(map[i]){
+      outputMap[i] = map[i];
+    }else{
+      let prevIndex, nextIndex;
+      nextIndex = prevIndex = i;
+
+      //find prev color
+      while(!map[prevIndex] && prevIndex > 0){
+        prevIndex--;
+      }
+      //find next color
+      while(!map[nextIndex] && nextIndex < 255){
+        nextIndex++;
+      }
+      //
+      //если промежуток недостающих оттенков меньше N - интерполируем для них количество пикселей
+      //иначе считаем что пикселей такого цвета точно нет
+      let enhance = false;
+      if(nextIndex - prevIndex < 10) enhance = true;
+      enhance = true;
+
+      let prevColor = !map[prevIndex] ? [0, 0, 0, 255, 0] : map[prevIndex];
+      let nextColor = !map[nextIndex] ? [255, 255, 255, 255, 0] : map[nextIndex];
+
+      //interpolate colors
+      const st = (i - prevIndex)/(nextIndex - prevIndex);
+      let middleColor = [
+        Math.round(prevColor[0] + (nextColor[0] - prevColor[0])*st),
+        Math.round(prevColor[1] + (nextColor[1] - prevColor[1])*st),
+        Math.round(prevColor[2] + (nextColor[2] - prevColor[2])*st),
+        Math.round(prevColor[3] + (nextColor[3] - prevColor[3])*st),
+        enhance ? prevColor[4] + (nextColor[4] - prevColor[4])*st : 0
+      ]
+
+      outputMap[i] = middleColor;
+    }
+  }
+  return outputMap;
 }
 
 const mapColors = (canvas, selection) => {
@@ -117,41 +191,15 @@ const mapColors = (canvas, selection) => {
     if(colors.hasOwnProperty(i)){
       map[i] = colors[i];
       map[i][4] = map[i][4]/max;
-    }else{
-      let prevIndex, nextIndex;
-      nextIndex = prevIndex = i;
-
-      //find prev color
-      while(!colors.hasOwnProperty(prevIndex) && prevIndex > 0){
-        prevIndex--;
-      }
-      //find next color
-      while(!colors.hasOwnProperty(nextIndex) && nextIndex < 255){
-        nextIndex++;
-      }
-      //
-      let prevColor = !colors.hasOwnProperty(prevIndex) ? [0, 0, 0, 255] : colors[prevIndex];
-      let nextColor = !colors.hasOwnProperty(nextIndex) ? [255, 255, 255, 255] : colors[nextIndex];
-
-      //interpolate colors
-      const st = (i - prevIndex)/(nextIndex - prevIndex);
-      let middleColor = [
-        Math.round(prevColor[0] + (nextColor[0] - prevColor[0])*st),
-        Math.round(prevColor[1] + (nextColor[1] - prevColor[1])*st),
-        Math.round(prevColor[2] + (nextColor[2] - prevColor[2])*st),
-        Math.round(prevColor[3] + (nextColor[3] - prevColor[3])*st),
-        0
-      ]
-      map[i] = middleColor;
-
     }
-
   }
+  map = interpolateColorMap(map);
   return map;
 }
 
 
-const colorize = () => {
+
+const colorize = (map = colorMap) => {
   console.log('colorize')
   const targetCtx = targetCanvas.getContext('2d');
   const imageData = targetCtx.getImageData(0, 0, targetCanvas.width, targetCanvas.height);
@@ -167,7 +215,7 @@ const colorize = () => {
       [r, g, b, alpha] = targetCtx.getImageData(x, y, 1, 1).data;
 
       let greyIndex = greyStyle(r, g, b, alpha);
-      [r, g, b, alpha] = colorMap[greyIndex];
+      [r, g, b, alpha] = map[greyIndex];
 
       data[y*resultCanvas.width + x] = rgbColor(r, g, b, alpha);
     }
@@ -182,6 +230,8 @@ const colorizeSelection = () => {
 
 //IMAGES ON LOAD
 
+let sourcePeak, targetPeak;
+
 source.onload = () => {
   html.source.style.display = 'block';
   sourceCanvas.width = source.width;
@@ -190,7 +240,7 @@ source.onload = () => {
 
   colorMap = mapColors(sourceCanvas);
   drawHistogram(histogramCanvas, colorMap);
-  findPeak(colorMap);
+  sourcePeak = findPeak(colorMap);
   if(target.src){
     colorize();
   }
@@ -202,10 +252,11 @@ target.onload = () => {
   targetCanvas.getContext('2d').drawImage(target, 0, 0, target.width, target.height);
   resultCanvas.getContext('2d').drawImage(target, 0, 0, target.width, target.height);
 
-  let targetcolorMap = mapColors(targetCanvas);
-  drawHistogram(histogramTargetCanvas, targetcolorMap);
-  findPeak(targetcolorMap);
+  targetColorMap = mapColors(targetCanvas);
+  drawHistogram(histogramTargetCanvas, targetColorMap);
+  targetPeak = findPeak(targetColorMap);
   if(source.src && colorMap.length == 256){
+    alignColorMap(sourcePeak, targetPeak, colorMap);
     colorize();
   }
 }
@@ -297,12 +348,23 @@ document.onmouseup = (event) => {
       if(source.src){
         colorMap = mapColors(sourceCanvas, selection);
         drawHistogram(histogramCanvas, colorMap);
-        findPeak(colorMap);
-        //colorize from selection
-        if(target.src){
-          colorize();
+        sourcePeak = findPeak(colorMap);
+        if(targetColorMap){
+          targetPeak = findPeak(targetColorMap);
+          let alignedColorMap = alignColorMap(sourcePeak, targetPeak, colorMap);
+          colorize(alignedColorMap);
         }
       }
     }
+  }
+}
+
+html.peakWeight.onchange = (event) => {
+  peakWeight = Number(event.target.value);
+  sourcePeak = findPeak(colorMap);
+  if(targetColorMap){
+    targetPeak = findPeak(targetColorMap);
+    let alignedColorMap = alignColorMap(sourcePeak, targetPeak, colorMap);
+    colorize(alignedColorMap);
   }
 }

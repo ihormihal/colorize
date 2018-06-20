@@ -17,10 +17,14 @@ body {
   z-index: 1000;
 }
 
-.form-control {
+.form-group {
   width: 600px;
 }
-.form-control label, .form-control input {
+.form-group label {
+  margin: 15px 0;
+}
+.form-group label, .form-group input {
+  display: block;
   width: 100%;
 }
 
