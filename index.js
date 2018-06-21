@@ -64,7 +64,9 @@ const colorize = (mask) => {
 
   if(!sourcePeak || !targetPeak) return;
 
-  let colorMap = alignColorMap(sourcePeak, targetPeak, source.map);
+  let colorMap = source.map;
+  // let colorMap = alignColorMap(sourcePeak, targetPeak, source.map);
+  fitHistorgam.draw(colorMap);
 
   const targetData = target.ctx.getImageData(0, 0, target.canvas.width, target.canvas.height);
   const resultData = result.ctx.getImageData(0, 0, result.canvas.width, result.canvas.height);
@@ -76,19 +78,18 @@ const colorize = (mask) => {
 
   const draw = (i) => {
     let x, y, r, g, b, alpha;
-    x = (i / 4) % target.ctx.width;
-    y = ~~((i / 4) / target.ctx.width);
+    x = (i / 4) % result.ctx.width;
+    y = ~~((i / 4) / result.ctx.width);
     [r, g, b, alpha] = [ targetData.data[i], targetData.data[i+1], targetData.data[i+2], targetData.data[i+3] ];
     let greyIndex = greyStyle(r, g, b, alpha);
     [r, g, b, alpha] = colorMap[greyIndex];
-    // data[y*result.ctx.width + x] = rgbColor(r, g, b, alpha);
+    data[y*result.ctx.width + x] = rgbColor(r, g, b, alpha);
   }
 
 
   let x, y, r, g, b, alpha;
   if(mask){
-    let maskCtx = mask.getContext('2d');
-    let drawPixels = maskCtx.getImageData(0, 0, mask.width, mask.height).data;
+    let drawPixels = mask.ctx.getImageData(0, 0, mask.width, mask.height).data;
     for (let i = 0; i < drawPixels.length; i += 4) {
       if(drawPixels[i+3]) draw(i);
     }
@@ -103,34 +104,17 @@ const colorize = (mask) => {
 
 }
 
-
-target.onload = () => {
-  targetCanvas.width = resultCanvas.width = drawCanvas.width = target.width;
-  targetCanvas.height = resultCanvas.height = drawCanvas.height = target.height;
-  targetCanvas.getContext('2d').drawImage(target, 0, 0, target.width, target.height);
-  resultCanvas.getContext('2d').drawImage(target, 0, 0, target.width, target.height);
-
-  targetColorMap = mapColors(targetCanvas);
-  drawHistogram(histogramTargetCanvas, targetColorMap);
-  targetPeak = findPeak(targetColorMap, peakWeight);
-  if(source.src && colorMap.length == 256){
-    alignColorMap(sourcePeak, targetPeak, colorMap);
-    colorize();
-  }
-}
-
 // SOURCE AREA SELECTION
 
 const selection = new Selection('source-area');
 
 selection.onSelected = (area) => {
-  console.log(area)
   source.mapColors(area);
   sourceHistorgam.draw(source.map);
   sourcePeak = findPeak(source.map, peakWeight);
   if(target.map){
     targetPeak = findPeak(target.map, peakWeight);
-    colorize(alignColorMap(sourcePeak, targetPeak, source.map));
+    colorize();
   }
 }
 
