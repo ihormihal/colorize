@@ -83,6 +83,7 @@ const colorize = (mask) => {
     [r, g, b, alpha] = [ targetData.data[i], targetData.data[i+1], targetData.data[i+2], targetData.data[i+3] ];
     let greyIndex = greyStyle(r, g, b, alpha);
     [r, g, b, alpha] = colorMap[greyIndex];
+    console.log([r, g, b, alpha])
     data[y*result.ctx.width + x] = rgbColor(r, g, b, alpha);
   }
 
