@@ -7,6 +7,10 @@ body {
   box-sizing: border-box;
 }
 
+.clear {
+  clear: both;
+}
+
 #source-area {
   position: relative;
   display: inline-block;
@@ -72,10 +76,7 @@ body {
   min-height: 100px;
   background-color: #6dbcff;
 }
-.image canvas {
-  max-height: 500px;
-  width: auto;
-}
+
 .drop input[type=file] {
   display: none;
 }

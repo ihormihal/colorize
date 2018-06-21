@@ -46,6 +46,7 @@ export const interpolateColorMap = (map) => {
       //если промежуток недостающих оттенков меньше N - интерполируем для них количество пикселей
       //иначе считаем что пикселей такого цвета точно нет
       let enhance = nextIndex - prevIndex < enhanceDist;
+      enhance = true
 
       let prevColor = !map[prevIndex] ? [0, 0, 0, 255, 0] : map[prevIndex];
       let nextColor = !map[nextIndex] ? [255, 255, 255, 255, 0] : map[nextIndex];
@@ -67,6 +68,7 @@ export const interpolateColorMap = (map) => {
 }
 
 export const alignColorMap = (sourcePeak, targetPeak, map) => {
+  if(!sourcePeak || !targetPeak) return map;
   let outputMap = [];
   let dWidth = (sourcePeak.end - sourcePeak.start)/2;
   let tWidth = (targetPeak.end - targetPeak.start)/2;

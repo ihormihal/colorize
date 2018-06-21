@@ -34,15 +34,12 @@ export default class ImageCanvas {
     const colors = {};
     const map = [];
 
-    let pixelsCount = 0;
     let max = 0;
 
     let data;
     if(selection){
-      pixelsCount = selection.width * selection.height;
       data = this.ctx.getImageData(selection.x, selection.y, selection.width, selection.height).data;
     }else{
-      pixelsCount = this.canvas.width * this.canvas.height;
       data = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height).data;
     }
 

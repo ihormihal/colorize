@@ -3,16 +3,11 @@ export default class Mask {
     this.canvas = document.getElementById(id);
     this.ctx = this.canvas.getContext('2d');
 
-    this.ctx.strokeStyle = "#df4b26";
-    this.ctx.lineJoin = "round";
-    this.setRadius(10);
-
     this.clickX = [];
     this.clickY = [];
     this.clickDrag = [];
     this.offset = [0, 0];
     this.scale = 1;
-
 
     this.canvas.onmousedown = () => {
       this._paint = true;
@@ -36,6 +31,14 @@ export default class Mask {
     }
   }
 
+  init(width, height, radius) {
+    this.canvas.width = width;
+    this.canvas.height = height;
+    this.ctx.strokeStyle = "#ff0000";
+    this.ctx.lineWidth = radius;
+    this.ctx.lineJoin = "round";
+  }
+
   setRadius(radius) {
     this.ctx.lineWidth = radius;
   }
@@ -57,7 +60,7 @@ export default class Mask {
   }
 
   _redraw() {
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    // this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
     for(let i=0; i<this.clickX.length; i++) {
       this.ctx.beginPath();

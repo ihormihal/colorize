@@ -5,5 +5,6 @@ export default {
   sourceFile: document.getElementById('source-file'),
   targetInput: document.getElementById('target-input'),
   targetFile: document.getElementById('target-file'),
-  peakWeight: document.getElementById('peak-weight')
+  peakWeight: document.getElementById('peak-weight'),
+  colorize: document.getElementById('colorize')
 }
