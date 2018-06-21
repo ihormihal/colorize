@@ -26,6 +26,9 @@ const resultCanvas = document.getElementById('result-canvas');
 const histogramCanvas = document.getElementById('histogram-canvas');
 const histogramTargetCanvas = document.getElementById('histogram-target-canvas');
 const histogramResultCanvas = document.getElementById('histogram-result-canvas');
+const drawCanvas = document.getElementById('draw-canvas');
+
+const drawContext = drawCanvas.getContext("2d");
 
 html.peakWeight.value = peakWeight;
 
@@ -197,9 +200,23 @@ const mapColors = (canvas, selection) => {
   return map;
 }
 
+//
+// let draw = (x,y,data,targetCtx,resultCanvas,map) => {
+//   return new Promise((resolve, reject) => {
+//     setTimeout(() => {
+//       let r, g, b, alpha;
+//       [r, g, b, alpha] = targetCtx.getImageData(x, y, 1, 1).data;
+//
+//       let greyIndex = greyStyle(r, g, b, alpha);
+//       [r, g, b, alpha] = map[greyIndex];
+//
+//       data[y*resultCanvas.width + x] = rgbColor(r, g, b, alpha);
+//       resolve();
+//     })
+//   });
+// }
 
-
-const colorize = (map = colorMap) => {
+const colorize = (map = colorMap, mask) => {
   console.log('colorize')
   const targetCtx = targetCanvas.getContext('2d');
   const imageData = targetCtx.getImageData(0, 0, targetCanvas.width, targetCanvas.height);
@@ -209,20 +226,33 @@ const colorize = (map = colorMap) => {
   const data = new Uint32Array(buf);
 
 
-  for(let y=0; y<resultCanvas.height; y++){
-    for(let x=0; x<resultCanvas.width; x++){
-      let r, g, b, alpha;
-      [r, g, b, alpha] = targetCtx.getImageData(x, y, 1, 1).data;
+  const draw = (i) => {
+    let x, y, r, g, b, alpha;
+    x = (i / 4) % targetCanvas.width;
+    y = ~~((i / 4) / targetCanvas.width);
+    [r, g, b, alpha] = [ imageData.data[i], imageData.data[i+1], imageData.data[i+2], imageData.data[i+3] ];
+    let greyIndex = greyStyle(r, g, b, alpha);
+    [r, g, b, alpha] = map[greyIndex];
+    data[y*resultCanvas.width + x] = rgbColor(r, g, b, alpha);
+  }
 
-      let greyIndex = greyStyle(r, g, b, alpha);
-      [r, g, b, alpha] = map[greyIndex];
 
-      data[y*resultCanvas.width + x] = rgbColor(r, g, b, alpha);
+  let x, y, r, g, b, alpha;
+  if(mask){
+    let maskCtx = mask.getContext('2d');
+    let drawPixels = maskCtx.getImageData(0, 0, mask.width, mask.height).data;
+    for (let i = 0; i < drawPixels.length; i += 4) {
+      if(drawPixels[i+3]) draw(i);
+    }
+  }else{
+    for (let i = 0; i < imageData.data.length; i += 4) {
+      draw(i);
     }
   }
 
   imageData.data.set(buf8);
   resultCanvas.getContext('2d').putImageData(imageData, 0, 0);
+
 }
 
 const colorizeSelection = () => {
@@ -247,8 +277,8 @@ source.onload = () => {
 }
 
 target.onload = () => {
-  targetCanvas.width = resultCanvas.width = target.width;
-  targetCanvas.height = resultCanvas.height = target.height;
+  targetCanvas.width = resultCanvas.width = drawCanvas.width = target.width;
+  targetCanvas.height = resultCanvas.height = drawCanvas.height = target.height;
   targetCanvas.getContext('2d').drawImage(target, 0, 0, target.width, target.height);
   resultCanvas.getContext('2d').drawImage(target, 0, 0, target.width, target.height);
 
@@ -367,4 +397,78 @@ html.peakWeight.onchange = (event) => {
     let alignedColorMap = alignColorMap(sourcePeak, targetPeak, colorMap);
     colorize(alignedColorMap);
   }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+const drawRadius = 10;
+let clickX = [];
+let clickY = [];
+let clickDrag = [];
+let paint;
+let drawOffset;
+
+let drawAreaScale = 1;
+
+let drawPixels = [];
+
+function addClick(x, y, dragging)
+{
+  clickX.push(x*drawAreaScale);
+  clickY.push(y*drawAreaScale);
+  clickDrag.push(dragging);
+}
+
+
+const redraw = () => {
+  drawContext.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+  drawContext.strokeStyle = "#df4b26";
+  drawContext.lineJoin = "round";
+  drawContext.lineWidth = drawRadius;
+
+  for(let i=0; i< clickX.length; i++) {
+    drawContext.beginPath();
+    if(clickDrag[i] && i){
+      drawContext.moveTo(clickX[i-1], clickY[i-1]);
+    }else{
+      drawContext.moveTo(clickX[i]-1, clickY[i]);
+    }
+    drawContext.lineTo(clickX[i], clickY[i]);
+    drawContext.closePath();
+    drawContext.stroke();
+  }
+}
+
+drawCanvas.onmousedown = function(event) {
+  paint = true;
+  // drawAreaScale = drawCanvas
+
+  let rect = drawCanvas.getBoundingClientRect();
+  drawAreaScale = drawCanvas.width/rect.width;
+  drawOffset = [-rect.left, -rect.top];
+  addClick(event.clientX + drawOffset[0], event.clientY + drawOffset[1]);
+  redraw();
+}
+drawCanvas.onmousemove = function(event) {
+  if(paint){
+    addClick(event.clientX + drawOffset[0], event.clientY + drawOffset[1], true);
+    redraw();
+  }
+}
+drawCanvas.onmouseup = (event) => {
+  paint = false;
+  colorize(colorMap, drawCanvas);
+  drawContext.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+  clickX = [];
+  clickY = [];
 }

@@ -33,6 +33,16 @@ body {
   height: auto;
 }
 
+#draw-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.5;
+  cursor: default;
+}
+
 .image {
   margin: 0 auto;
   min-height: 300px;
