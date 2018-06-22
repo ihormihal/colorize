@@ -20,6 +20,9 @@ export default class ImageCanvas {
         this.canvas.width = this.image.width;
         this.canvas.height = this.image.height;
 
+        let rect = this.canvas.getBoundingClientRect();
+        this.scale = this.canvas.width/rect.width;
+
         this.ctx.drawImage(this.image, 0, 0, this.canvas.width, this.canvas.height);
 
         this.mapColors();
@@ -38,7 +41,7 @@ export default class ImageCanvas {
 
     let data;
     if(selection){
-      data = this.ctx.getImageData(selection.x, selection.y, selection.width, selection.height).data;
+      data = this.ctx.getImageData(selection.x*this.scale, selection.y*this.scale, selection.width*this.scale, selection.height*this.scale).data;
     }else{
       data = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height).data;
     }

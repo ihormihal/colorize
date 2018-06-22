@@ -52,7 +52,7 @@ elements.targetFile.onchange = (event) => {
   const file = event.target.files[0];
   if(file && file.type.match('image.*')){
     Promise.all([target.load(file), result.load(file)]).then(() => {
-      mask.init(target.canvas.width, target.canvas.height, 50);
+      mask.init(target.canvas.width, target.canvas.height, 250);
       targetHistorgam.draw(target.map);
       targetPeak = findPeak(target.map, peakWeight);
       colorMap = alignColorMap(sourcePeak, targetPeak, source.map);
