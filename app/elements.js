@@ -6,5 +6,6 @@ export default {
   targetInput: document.getElementById('target-input'),
   targetFile: document.getElementById('target-file'),
   peakWeight: document.getElementById('peak-weight'),
+  paintRadius: document.getElementById('paint-radius'),
   colorize: document.getElementById('colorize')
 }

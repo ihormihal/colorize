@@ -32,7 +32,7 @@ export default class ImageCanvas {
 
   }
 
-  mapColors(selection) {
+  mapColors(selection, mask) {
 
     const colors = {};
     const map = [];
@@ -46,7 +46,15 @@ export default class ImageCanvas {
       data = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height).data;
     }
 
+    let maskData = [];
+    if(mask){
+      maskData = mask.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height).data;
+    }
+
     for(let i=0; i<data.length; i = i + 4){
+      if(mask && maskData[i+3] == 0){
+        continue;
+      }
       let r, g, b, alpha;
       r = data[i];
       g = data[i+1];

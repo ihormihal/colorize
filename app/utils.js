@@ -68,6 +68,7 @@ export const interpolateColorMap = (map) => {
 }
 
 export const alignColorMap = (sourcePeak, targetPeak, map) => {
+  console.log(sourcePeak, targetPeak)
   if(!sourcePeak || !targetPeak) return map;
   let outputMap = [];
   let dWidth = (sourcePeak.end - sourcePeak.start)/2;

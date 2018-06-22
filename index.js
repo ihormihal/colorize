@@ -9,6 +9,7 @@ import { rgbColor, greyStyle, findPeak, alignColorMap } from './app/utils.js';
 
 
 let peakWeight = 1; //for color map normalization
+let paintRadius = 50;
 
 const source = new ImageCanvas('canvas-source');
 const target = new ImageCanvas('canvas-target');
@@ -25,6 +26,7 @@ let colorMap = [];
 
 //set constrol default value
 elements.peakWeight.value = peakWeight;
+elements.paintRadius.value = paintRadius;
 
 // FILE inputs
 elements.sourceInput.onmouseup = () => {
@@ -63,6 +65,14 @@ elements.targetFile.onchange = (event) => {
 }
 
 // MAIN
+mask.onSelect = () => {
+  target.mapColors(null, mask);
+  targetHistorgam.draw(target.map);
+  targetPeak = findPeak(target.map, peakWeight);
+  colorMap = alignColorMap(sourcePeak, targetPeak, source.map);
+  fitHistorgam.draw(colorMap);
+}
+
 const colorize = (mask) => {
 
   if(!sourcePeak || !targetPeak) return;
@@ -120,9 +130,15 @@ selection.onSelected = (area) => {
 elements.peakWeight.onchange = (event) => {
   peakWeight = Number(event.target.value);
   sourcePeak = findPeak(source.map, peakWeight);
+  targetPeak = findPeak(target.map, peakWeight);
   colorMap = alignColorMap(sourcePeak, targetPeak, source.map);
   fitHistorgam.draw(colorMap);
   //colorize();
+}
+
+elements.paintRadius.onchange = (event) => {
+  paintRadius = Number(event.target.value);
+  mask.setRadius(paintRadius);
 }
 
 elements.colorize.onclick = () => {

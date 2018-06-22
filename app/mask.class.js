@@ -28,6 +28,7 @@ export default class Mask {
 
     this.canvas.onmouseup = () => {
       this._paint = false;
+      if(this.onSelect) this.onSelect();
     }
   }
 
