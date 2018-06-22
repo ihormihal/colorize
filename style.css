@@ -14,6 +14,11 @@ body {
 #source-area {
   position: relative;
   display: inline-block;
+  height: 500px;
+}
+#canvas-source {
+  height: 100%;
+  width: auto;
 }
 
 .selection-wrapper {
