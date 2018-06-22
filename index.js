@@ -141,6 +141,10 @@ elements.paintRadius.onchange = (event) => {
   mask.setRadius(paintRadius);
 }
 
+elements.clear.onclick = () => {
+  mask.clear();
+}
+
 elements.colorize.onclick = () => {
   colorMap = alignColorMap(sourcePeak, targetPeak, source.map);
   colorize(mask);

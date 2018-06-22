@@ -7,5 +7,6 @@ export default {
   targetFile: document.getElementById('target-file'),
   peakWeight: document.getElementById('peak-weight'),
   paintRadius: document.getElementById('paint-radius'),
+  clear: document.getElementById('clear'),
   colorize: document.getElementById('colorize')
 }
